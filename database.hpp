@@ -1,37 +1,32 @@
-#ifndef DATABASE_HPP
-#define DATABASE_HPP
+#ifndef DATABASE_H
+#define DATABASE_H
 
-#include "sqlite3.h"
-#include <string>
-#include <vector>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-struct User {
-    int id;
-    std::string name;
-    std::string role;
-};
+#include <stdio.h>
 
-class SecureSync {
-private:
-    sqlite3* db;
-    std::string currentUserRole;
+typedef struct {
+	char *name;
+	char **colnames;
+	char **coltypes;
+	int  ncols;
+	char ***rows;
+	int  nrows;
+} Table;
 
-public:
-    SecureSync(const std::string& db_name);
-    ~SecureSync();
+typedef struct {
+	Table **tables;
+	int    n;
+} MultiTable;
 
-    // Системные методы
-    bool initStructure();
-    void setCurrentUserRole(const std::string& role) { currentUserRole = role; }
+MultiTable *multitable_load(const char *filename);
+int         multitable_save(const MultiTable *mt, const char *filename);
+void        multitable_free(MultiTable *mt);
+void        execute_sql(MultiTable *mt, const char *sql, FILE *out);
 
-    // Бизнес-логика (с проверкой прав)
-    bool addUser(int id, const std::string& name, const std::string& role);
-    bool deleteUser(int id);
-    std::vector<User> getAllUsers();
-    
-    // Аудит
-    void logAction(const std::string& action);
-    void showAuditLogs();
-};
-
+#ifdef __cplusplus
+}
+#endif
 #endif
