@@ -1,61 +1,49 @@
 CC     = g++
-CFLAGS = -std=c++11 -Wall -Wextra -pedantic -O2
-LDFLAGS =
-TARGET = dbquery
-OBJS   = database.o main.o
+CFLAGS = -std=c++11 -Wall -Wextra -pedantic -O2 -fPIC
+BUILD_DIR = build
+LIBRARY = $(BUILD_DIR)/libdatabase.a
+SERVER_TARGET = $(BUILD_DIR)/dbserver
+CONSOLE_TARGET = $(BUILD_DIR)/dbquery
+CLIENT_TARGET = qt_client/dbclient
+OBJS   = $(BUILD_DIR)/database.o
+SERVER_OBJ = $(BUILD_DIR)/server.o
+CONSOLE_OBJ = $(BUILD_DIR)/main.o
 
-all: $(TARGET)
+all: $(LIBRARY) $(SERVER_TARGET) $(CONSOLE_TARGET) $(CLIENT_TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-database.o: database.cpp database.hpp
+$(LIBRARY): $(BUILD_DIR) $(OBJS)
+	ar rcs $@ $(OBJS)
+
+$(SERVER_TARGET): $(BUILD_DIR) $(SERVER_OBJ) $(LIBRARY)
+	$(CC) -o $@ $(SERVER_OBJ) -L$(BUILD_DIR) -ldatabase
+
+$(CONSOLE_TARGET): $(BUILD_DIR) $(CONSOLE_OBJ) $(LIBRARY)
+	$(CC) -o $@ $(CONSOLE_OBJ) -L$(BUILD_DIR) -ldatabase
+
+$(CLIENT_TARGET):
+	cd qt_client && (qmake6 || qmake) && $(MAKE)
+
+$(BUILD_DIR)/database.o: database.cpp database.hpp | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c -o $@ database.cpp
 
-main.o: main.cpp database.hpp
+$(BUILD_DIR)/server.o: server.cpp database.hpp | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c -o $@ server.cpp
+
+$(BUILD_DIR)/main.o: main.cpp database.hpp | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c -o $@ main.cpp
 
-test: $(TARGET)
-	@rm -f /tmp/db1.csv
-	@./$(TARGET) /tmp/db1.csv "CREATE TABLE t1 (a INT, b TEXT);" /tmp/db1.csv
-	@./$(TARGET) /tmp/db1.csv "SELECT * FROM t1;" > /tmp/out1.csv
-	@printf "a,b\n" | diff - /tmp/out1.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db1.csv "INSERT INTO t1 VALUES (1, 'hello');" /tmp/db2.csv
-	@./$(TARGET) /tmp/db2.csv "SELECT * FROM t1;" > /tmp/out2.csv
-	@printf "a,b\n1,hello\n" | diff - /tmp/out2.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db2.csv "INSERT INTO t1 VALUES (2, 'world');" /tmp/db3.csv
-	@./$(TARGET) /tmp/db3.csv "SELECT * FROM t1;" > /tmp/out3.csv
-	@printf "a,b\n1,hello\n2,world\n" | diff - /tmp/out3.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db3.csv "SELECT a,b FROM t1 WHERE a > 1;" > /tmp/out4.csv
-	@printf "a,b\n2,world\n" | diff - /tmp/out4.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db3.csv "DELETE FROM t1 WHERE a = 1;" /tmp/db5.csv
-	@./$(TARGET) /tmp/db5.csv "SELECT * FROM t1;" > /tmp/out5.csv
-	@printf "a,b\n2,world\n" | diff - /tmp/out5.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db5.csv "DROP TABLE IF EXISTS t1;" /tmp/db6.csv
-	@./$(TARGET) /tmp/db6.csv "SELECT * FROM t1;" > /tmp/out6.csv 2>&1; \
-	if grep -q "not found" /tmp/out6.csv; then echo "PASS (table gone)"; else echo "FAIL"; fi
-
-	@./$(TARGET) /tmp/db6.csv "CREATE TABLE IF NOT EXISTS t1 (x INT);" /tmp/db7.csv
-	@./$(TARGET) /tmp/db7.csv "SELECT * FROM t1;" > /tmp/out7.csv
-	@printf "x\n" | diff - /tmp/out7.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db7.csv "INSERT INTO t1 VALUES (100);" /tmp/db8.csv
-	@./$(TARGET) /tmp/db8.csv "SELECT x FROM t1;" > /tmp/out8.csv
-	@printf "x\n100\n" | diff - /tmp/out8.csv && echo "PASS" || echo "FAIL"
-
-	@./$(TARGET) /tmp/db3.csv "DELETE FROM t1;" /tmp/db10.csv
-	@./$(TARGET) /tmp/db10.csv "SELECT * FROM t1;" > /tmp/out10.csv
-	@printf "a,b\n" | diff - /tmp/out10.csv && echo "PASS" || echo "FAIL"
-
-	@echo "All tests done."
-	rm -f /tmp/db*.csv /tmp/out*.csv
-
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD_DIR)
+	rm -rf qt_client/Makefile qt_client/*.o qt_client/dbclient qt_client/.qmake.stash
+	rm -rf /tmp/db_test mydb.db test_server.db test_gui.db
 
-.PHONY: all test clean
+test: $(CONSOLE_TARGET)
+	@./test.sh
+
+test_server: $(SERVER_TARGET)
+	@./test_server.sh
+
+.PHONY: all clean test test_server

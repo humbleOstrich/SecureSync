@@ -2,11 +2,15 @@
 
 set -e
 
-./build.sh
-
-if [ $# -lt 2 ]; then
-	echo "Usage: $0 <csv_file> <sql> [output_csv]" >&2
-	exit 1
+if [ ! -f build/dbquery ]; then
+    ./build.sh
 fi
 
-./dbquery "$@"
+if [ $# -eq 1 ]; then
+    ./build/dbquery "$1"
+elif [ $# -eq 2 ]; then
+    ./build/dbquery "$1" "$2"
+else
+    echo "Usage: $0 <data_file> [sql_command]" >&2
+    exit 1
+fi
