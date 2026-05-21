@@ -17,6 +17,7 @@ public:
         : mt(mt), sql(sql), db_path(db_path) {}
     void execute() {
         char buffer[65536];
+        memset(buffer, 0, sizeof(buffer)); // ← ОБЯЗАТЕЛЬНО зануляем
         FILE* stream = fmemopen(buffer, sizeof(buffer), "w");
         int affected = execute_sql(mt, sql.c_str(), stream);
         fflush(stream);
@@ -24,7 +25,10 @@ public:
         fclose(stream);
         if (affected >= 0) {
             if (affected == 0) {
-                result += "OK\n";
+                if (result.empty() || result.back() != '\n')
+                    result += "OK\n";
+                else
+                    result += "OK\n";
             } else {
                 result += "Affected rows: " + std::to_string(affected) + "\n";
             }
@@ -53,7 +57,7 @@ int main(int argc, char* argv[]) {
     addr.sin_port = htons(port);
     bind(server_fd, (struct sockaddr*)&addr, sizeof(addr));
     listen(server_fd, 5);
-    std::cout << "Server listening on port " << port << std::endl;
+    std::cout << "Server listening on port " << port << ", db file: " << db_file << std::endl;
 
     while (true) {
         int client_fd = accept(server_fd, nullptr, nullptr);
@@ -62,6 +66,8 @@ int main(int argc, char* argv[]) {
         if (n > 0) {
             buffer[n] = '\0';
             std::string sql(buffer);
+            // удаляем возможный перевод строки
+            if (!sql.empty() && sql.back() == '\n') sql.pop_back();
             SQLCommand cmd(mt, sql, db_file);
             cmd.execute();
             std::string result = cmd.getResult();

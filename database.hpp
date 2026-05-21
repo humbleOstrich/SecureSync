@@ -18,7 +18,7 @@ typedef enum {
 typedef struct {
     char *name;
     char **colnames;
-    int  *coltypes;          // значения ColumnType
+    int  *coltypes;
     int   ncols;
     char ***rows;
     int   nrows;

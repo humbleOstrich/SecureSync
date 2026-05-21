@@ -46,7 +46,7 @@ void MainWindow::sendSQL() {
     if (!isConnected) {
         socket->connectToHost(serverHost, serverPort);
         if (!socket->waitForConnected(2000)) {
-            QMessageBox::warning(this, "Error", 
+            QMessageBox::warning(this, "Error",
                 QString("Cannot connect to %1:%2. Is server running?").arg(serverHost).arg(serverPort));
             return;
         }

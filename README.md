@@ -1,52 +1,50 @@
-Проект собственной СУБД
-=======================
+# Проект собственной СУБД
 
-Команда:
---------
+Команда:  
+Группа ИУ5-23Б  
+- Балаева Елена  
+- Следнев Даня  
+- Решетов Максим  
+- Шестаков Максим  
 
-Группа ИУ5-23Б
+## Особенности
 
-* Балаева Елена
-* Следнев Даня
-* Решетов Максим
-* Шестаков Максим
+- Компактность: ~800 сторк кода основной логики, ~1700 - вместе с GUI и сервером.
+- Реализация CLI не требует сторонних библиотек, для GUI необходим Qt.
+- Встроенные тесты для удобной проверки при изменении проекта.
+- CLI был реализован таким образом так как предпологает использование в цепочках команд.
 
-Запуск проекта
---------------
+```bash
+dbquery <file> [query] [file] 
+# или
+dbquery <file> [query] | <command2> [args] | <command3> ...
+```
 
-Сборка:
+## Возможности
 
-```[shell]
+- **DDL**: `CREATE TABLE`, `DROP TABLE`, `CREATE DATABASE`, `DROP DATABASE`
+- **DML**: `SELECT`, `INSERT`, `UPDATE`, `DELETE`
+- **Поддержка типов**: `INT`, `FLOAT`, `BOOL`, `TEXT`, `VARCHAR(n)`
+- **Сложные условия `WHERE`**: `AND`, `OR`, `NOT`, `=`, `!=`, `>`, `<`, `>=`, `<=`, скобки
+- **Множественная вставка**: `INSERT INTO ... VALUES (...), (...), ...`
+- **Явный список столбцов** в `INSERT`
+- **Проверка типов** при вставке и обновлении
+- **Постоянное хранилище** в CSV-подобном формате
+- **C++ библиотека** (`libdatabase.a`) для встраивания
+- **Консольный клиент** (`dbquery`) с интерактивным режимом
+- **Сетевой сервер** (`dbserver`) с поддержкой параллельных запросов
+- **GUI-клиент** на Qt5/Qt6 (подключение к серверу, отправка SQL, отображение результата)
+- **Паттерн проектирования** Command (каждый SQL-запрос – отдельный объект)
+
+## Требования
+
+- Компилятор с поддержкой C++11 (g++ или clang++)
+- `make`, `ar`
+- `netcat` (для тестирования сервера)
+- **Qt5 или Qt6** (для GUI-клиента):  
+  Ubuntu/Debian: `sudo apt install qt6-base-dev qt6-tools-dev` или `qt5-qmake qtbase5-dev`
+
+## Сборка
+
+```bash
 ./build.sh
-
-# или
-
-make
-```
-Запуск:
-
-```[shell]
-./run.sh
-
-# или
-
-bulid/prj.out
-```
-
-Базовые операции:
-
-```[bash]
-./dbquery mydata.csv "CREATE TABLE users (id INT, name TEXT, email TEXT);" mydata.csv
-```
-
-```[bash]
-./dbquery mydata.csv "INSERT INTO users VALUES (1, 'John', 'john@example.com');" mydata.csv
-./dbquery mydata.csv "INSERT INTO users VALUES (2, 'Jane', 'jane@example.com');" mydata.csv
-```
-
-```[bash]
-./dbquery mydata.csv "SELECT * FROM users;"
-id,name,email
-1,John,john@example.com
-2,Jane,jane@example.com
-```
