@@ -1,0 +1,13 @@
+digraph G {
+    rankdir=LR;
+    node [shape=box, style=filled];
+    
+    Invoker [label="Сервер\n(Invoker)", fillcolor=lightyellow];
+    Command [label="SQLCommand\n(Command)\n+ execute()", fillcolor=lightgreen];
+    Receiver [label="MultiTable\n(Receiver)\n+ execute_sql()\n+ multitable_save()", fillcolor=lightpink];
+    Client [label="Клиент\nотправляет SQL", shape=ellipse];
+    
+    Client -> Invoker [label="TCP запрос"];
+    Invoker -> Command [label="создаёт"];
+    Command -> Receiver [label="вызывает"];
+}

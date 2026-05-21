@@ -1,0 +1,13 @@
+digraph G {
+    rankdir=LR;
+    node [shape=box, style=filled, fillcolor=lightblue];
+    
+    Library [label="libdatabase.a\n(ядро СУБД)\n- загрузка/сохранение\n- токенизация SQL\n- выполнение команд"];
+    CLI [label="Консольный клиент\n(dbquery)\n- REPL\n- однократные запросы"];
+    Server [label="Сетевой сервер\n(dbserver)\n- TCP-сокеты\n- паттерн Command"];
+    GUI [label="GUI-клиент\n(Qt)\n- подключение по TCP\n- отображение результатов"];
+    
+    Library -> CLI [label="статическая\nлинковка"];
+    Library -> Server [label="статическая\nлинковка"];
+    Server -> GUI [label="TCP\nпорт 54321"];
+}

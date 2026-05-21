@@ -1,0 +1,12 @@
+digraph G {
+    rankdir=LR;
+    node [shape=box, style=filled];
+    
+    Model [label="Модель\nQTcpSocket\n- чтение/запись данных", fillcolor=lightyellow];
+    View [label="Представление\nQTextEdit\n- отображение запросов\n- отображение ответов", fillcolor=lightgreen];
+    Controller [label="Контроллер\nMainWindow\n- sendSQL()\n- readResponse()", fillcolor=lightpink];
+    
+    Controller -> Model [label="отправка SQL"];
+    Model -> View [label="обновление\n(append)"];
+    View -> Controller [label="событие\n(clicked)"];
+}
